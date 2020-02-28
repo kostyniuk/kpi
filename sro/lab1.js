@@ -19,10 +19,10 @@ const allocator = (size = 32) => {
       buffer[2] = 0;//previous
 
       buffer[3] = 0;
-      buffer[4] = size - 6;
-      buffer[5] = 3;
+      buffer[4] = size - 9;
+      buffer[5] = 0;
 
-      buffer[buffer.length - 1] = size - 6
+      buffer[buffer.length - 1] = size - 9
       buffer[buffer.length - 2] = 0
       buffer[buffer.length - 3] = 1
 
@@ -33,16 +33,19 @@ const allocator = (size = 32) => {
       let flag = 0
       for(let i = 3; i < buffer.length; i++) {
         if (buffer[i] === 0 && !flag) { // not ender
-          //console.log({size_t, current: buffer[i], next: buffer[i+1], nextBlock: buffer[i + buffer[i+1]], i, index: i + buffer[i+1], nextBlock2: buffer[26]})
-          if (buffer[i + buffer[i+1]] === 0 || buffer[i + buffer[i+1]] === 1) {
+          console.log({size_t, current: buffer[i], next: buffer[i+1], nextBlock: buffer[i + buffer[i+1]], i, index2: i + buffer[i+1] + 3, nextBlock2: buffer[i + buffer[i+1] + 3]})
+          if (buffer[i + buffer[i+1] + 3] === 0 || buffer[i + buffer[i+1] + 3] === 1) {
+            console.log({inside: i})
             if (buffer[i+1] > size_t) {
               buffer[i] = 1;
               buffer[i+1] = size_t;
               buffer = random(buffer, i + 3, size_t)
 
               buffer[i+3+size_t] = 0;
-              buffer[i + 3 + size_t + 1] = size - 6 - (i+3+size_t) + 3;
+              buffer[i + 3 + size_t + 1] = size - (i + size_t + 4) - 5;
               buffer[i + 3 + size_t + 2] = size_t;
+
+              //if (buffer[i + 3 + size_t + 1] < 3)
               // Коли неможливо в кінці створити новий блок памяті
               flag = 1
             }
@@ -75,5 +78,5 @@ const allocator = (size = 32) => {
   return alloc
 }
 
- console.log(allocator().create().mem_dump().mem_alloc(5).mem_dump().mem_alloc(7).mem_dump().mem_alloc(2).mem_dump())
+ console.log(allocator().create().mem_dump().mem_alloc(5).mem_dump().mem_alloc(10).mem_dump().mem_alloc(5).mem_dump())
 
