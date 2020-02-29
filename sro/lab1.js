@@ -49,35 +49,24 @@ const allocator = (size = 32) => {
       let flag = 0;
       for (let i = 3; i < buffer.length; i++) {
         if (buffer[i] === 0 && !flag) {
-          // not ender
-          console.log({
-            inside: i,
-            size_t,
-            val: buffer[i + buffer[i + 1] + 3],
-            index: i + buffer[i + 1] + 3,
-            next: buffer[i + 1]
-          });
-
+          //console.log({i, next: i + buffer[i + 1] + 3})
           if (
             buffer[i + buffer[i + 1] + 3] === 0 ||
             buffer[i + buffer[i + 1] + 3] === 1
           ) {
-            console.log({ inside: i, size_t });
-            if (buffer[i + 1] > size_t) {
+            console.log({i, size_t})
+            if (buffer[i + 1] >= size_t) {
               buffer[i] = 1;
               buffer[i + 1] = size_t;
               buffer = random(buffer, i + 3, size_t);
+              console.log({i})
 
-              console.log({ i, size_t });
-              console.log(i + 3 + size_t, size - 2 - 2);
-              console.log({ err: size - (i + size_t + 4) - 5 });
               // Creation of a new header and blocks for rest parts
               if (i + 3 + size_t > size - 3 - 3) {
                 console.log('here');
                 console.log({ i, size_t });
 
                 buffer[i + 1] = size - i - 3 - 3;
-                console.log({ adder: size - i - 3 - 3 });
                 buffer = random(
                   buffer,
                   i + 3 + size_t,
@@ -99,8 +88,9 @@ const allocator = (size = 32) => {
 
               console.log(buffer[i + 3 + size_t + 1]);
 
-              buffer[size - 1] = buffer[i + 1];
+              buffer[size - 1] = buffer[i + 3 + size_t + 1];
               flag = 1;
+              break;
             }
           }
         }
@@ -114,7 +104,43 @@ const allocator = (size = 32) => {
 
       return this;
     },
-    mem_realloc(addr, size) {},
+    mem_realloc(addr, size) {
+
+      console.log({addr, size, el: buffer[addr]})
+
+      for(let i = addr; i > 0; i--) {
+        if ((buffer[i] === 0 || buffer[i] === 1) && (buffer[i + buffer[i + 1] + 3] === 0 ||
+          buffer[i + buffer[i + 1] + 3] === 1)) {
+          const headerStartIndex = i;
+          console.log(buffer[i + buffer[i + 1] + 3])
+          if (buffer[headerStartIndex+1] > size + 2) {
+            console.log({size, sizeOfBlock: buffer[headerStartIndex+1], i})
+            buffer[headerStartIndex+1] = size;
+            for (let j = i+3; j < buffer.length; j++) {
+              // console.log(j)
+              if ((buffer[j] === 0 || buffer[j] === 1) && (buffer[j + buffer[j + 1] + 3] === 0 ||
+                buffer[j + buffer[j + 1] + 3] === 1)) {
+                console.log(j);
+                const restStart = headerStartIndex + size + 3
+                console.log(restStart)
+                if (j - restStart > 2) {
+                  buffer[restStart] = 0;
+                  buffer[restStart+1] = j - restStart - 3;
+                  buffer[restStart+2] = size;
+
+                  buffer[j+2] = buffer[restStart+1]
+
+                }
+                break;
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      return this;
+    },
     mem_free(addr) {
       console.log({ addr, block: buffer[addr] });
 
@@ -131,7 +157,9 @@ const allocator = (size = 32) => {
           });
           buffer[i] = 0;
           buffer = random(buffer, i + 3, buffer[i + 1], 'empty');
+          break;
         }
+        
       }
 
       return this;
@@ -152,9 +180,11 @@ console.log(
     .mem_alloc(5)
     .mem_dump()
     .mem_alloc(7)
-    //.mem_dump()
-    //.mem_free(8)
-    //.mem_dump()
-    .mem_alloc(3)
+    .mem_dump().mem_realloc(10, 2)
+    // .mem_free(8)
+    // .mem_dump()
+    // .mem_alloc(1)
+    // .mem_free(24)
+    // .mem_alloc(1)
     .mem_dump()
 );
