@@ -127,8 +127,12 @@ const allocator = (size = 32) => {
                   buffer[restStart] = 0;
                   buffer[restStart+1] = j - restStart - 3;
                   buffer[restStart+2] = size;
-
                   buffer[j+2] = buffer[restStart+1]
+                  if (j - restStart > 3)
+                    buffer = random(buffer, restStart + 3, j - restStart - 3, 'empty')
+
+                } else {
+                  console.log('ELSE')
 
                 }
                 break;
@@ -180,7 +184,7 @@ console.log(
     .mem_alloc(5)
     .mem_dump()
     .mem_alloc(7)
-    .mem_dump().mem_realloc(10, 2)
+    .mem_dump().mem_realloc(10, 1)
     // .mem_free(8)
     // .mem_dump()
     // .mem_alloc(1)
