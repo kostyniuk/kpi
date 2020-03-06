@@ -42,53 +42,50 @@ const allocator = (size = 32) => {
       buffer[buffer.length - 2] = 0;
       buffer[buffer.length - 3] = 1;
 
-      //console.log(buffer)
       return this;
     },
     mem_alloc(size_t) {
       let flag = 0;
       for (let i = 3; i < buffer.length; i++) {
         if (buffer[i] === 0 && !flag) {
-          //console.log({i, next: i + buffer[i + 1] + 3})
           if (
             buffer[i + buffer[i + 1] + 3] === 0 ||
             buffer[i + buffer[i + 1] + 3] === 1
           ) {
-            console.log({i, size_t})
             if (buffer[i + 1] >= size_t) {
               buffer[i] = 1;
               buffer[i + 1] = size_t;
               buffer = random(buffer, i + 3, size_t);
-              console.log({i})
 
               // Creation of a new header and blocks for rest parts
               if (i + 3 + size_t > size - 3 - 3) {
-                console.log('here');
-                console.log({ i, size_t });
-
                 buffer[i + 1] = size - i - 3 - 3;
                 buffer = random(
                   buffer,
                   i + 3 + size_t,
                   size - (i + 3 + size_t) - 3
                 );
+                // if not enough for a new header
               } else {
-                // for(let j = i + 3 + size_t; j < size; j++) {
-                //   if (buffer[j]===0) {
-                //     console.log({j, val: buffer[j], diff: j - (i + 3 + size_t)})
-                //     //buffer[i + 3 + size_t + 1] = j - (i + 3 +4+ size_t)
-                //     break;
-                //   }
-                // }
-
                 buffer[i + 3 + size_t] = 0;
-                buffer[i + 3 + size_t + 1] = size - (i + size_t + 4) - 5;
+                let len;
+                for (let k = i + 3 + size_t; k < size; k++) {
+                  if (
+                    (buffer[k] === 0 || buffer[k] === 1) &&
+                    (buffer[k + buffer[k + 1] + 3] === 0 ||
+                      buffer[k + buffer[k + 1] + 3] === 1)
+                  ) {
+                    len = k - i - 3 - size_t - 3;
+                    buffer[k + 2] = len;
+                    break;
+                  } else {
+                    len = size - (i + size_t + 4) - 5;
+                  }
+                }
+                buffer[i + 3 + size_t + 1] = len;
                 buffer[i + 3 + size_t + 2] = size_t;
               }
 
-              console.log(buffer[i + 3 + size_t + 1]);
-
-              buffer[size - 1] = buffer[i + 3 + size_t + 1];
               flag = 1;
               break;
             }
@@ -105,40 +102,102 @@ const allocator = (size = 32) => {
       return this;
     },
     mem_realloc(addr, size) {
-
-      console.log({addr, size, el: buffer[addr]})
-
-      for(let i = addr; i > 0; i--) {
-        if ((buffer[i] === 0 || buffer[i] === 1) && (buffer[i + buffer[i + 1] + 3] === 0 ||
-          buffer[i + buffer[i + 1] + 3] === 1)) {
+      // searching for a corresponding header
+      for (let i = addr; i > 0; i--) {
+        if (
+          (buffer[i] === 0 || buffer[i] === 1) &&
+          (buffer[i + buffer[i + 1] + 3] === 0 ||
+            buffer[i + buffer[i + 1] + 3] === 1)
+        ) {
           const headerStartIndex = i;
-          console.log(buffer[i + buffer[i + 1] + 3])
-          if (buffer[headerStartIndex+1] > size + 2) {
-            console.log({size, sizeOfBlock: buffer[headerStartIndex+1], i})
-            buffer[headerStartIndex+1] = size;
-            for (let j = i+3; j < buffer.length; j++) {
-              // console.log(j)
-              if ((buffer[j] === 0 || buffer[j] === 1) && (buffer[j + buffer[j + 1] + 3] === 0 ||
-                buffer[j + buffer[j + 1] + 3] === 1)) {
-                console.log(j);
-                const restStart = headerStartIndex + size + 3
-                console.log(restStart)
+          // If we have enough space to relocate the block
+          if (buffer[headerStartIndex + 1] > size + 2) {
+            buffer[headerStartIndex + 1] = size;
+            for (let j = i + 3; j < buffer.length; j++) {
+              if (
+                (buffer[j] === 0 || buffer[j] === 1) &&
+                (buffer[j + buffer[j + 1] + 3] === 0 ||
+                  buffer[j + buffer[j + 1] + 3] === 1)
+              ) {
+                const restStart = headerStartIndex + size + 3;
+                // new part of memory
                 if (j - restStart > 2) {
                   buffer[restStart] = 0;
-                  buffer[restStart+1] = j - restStart - 3;
-                  buffer[restStart+2] = size;
-                  buffer[j+2] = buffer[restStart+1]
+                  buffer[restStart + 1] = j - restStart - 3;
+                  buffer[restStart + 2] = size;
+                  buffer[j + 2] = buffer[restStart + 1];
                   if (j - restStart > 3)
-                    buffer = random(buffer, restStart + 3, j - restStart - 3, 'empty')
-
+                    buffer = random(
+                      buffer,
+                      restStart + 3,
+                      j - restStart - 3,
+                      'empty'
+                    );
                 } else {
-                  console.log('ELSE')
-
                 }
                 break;
               }
             }
+          } else {
+            console.log(
+              'Not enough blocks to perform mem_realoc() in this part'
+            );
+            // go further to find out if we have any free block to locate the block
+            const curBlocksHeaderIndex = headerStartIndex;
+
+            for (let i = curBlocksHeaderIndex; i < buffer.length; i++) {
+              if (
+                buffer[i] === 0 &&
+                (buffer[i + buffer[i + 1] + 3] === 0 ||
+                  buffer[i + buffer[i + 1] + 3] === 1) &&
+                buffer[i + 1] >= size
+              ) {
+                // moving our block to new destination
+                const diff = buffer[i + 1] - size;
+
+                buffer[i] = 1;
+                buffer[i + 1] = size;
+
+                buffer = random(buffer, i + 3, size);
+
+                // either create a new header or just extend the part
+                if (diff < 3) {
+                  buffer = random(buffer, i + 3 + size, diff);
+                  buffer[i + 1] += diff;
+                } else {
+                  buffer[i + 3 + size] = 0;
+                  buffer[i + 3 + size + 1] = diff - 3;
+                  buffer[i + 3 + size + 2] = size;
+                  const endBlock = i + 3 + size + 2;
+
+                  // updating header of the next block
+                  let notLast = false;
+                  for (let i = endBlock; i < buffer.length; i++) {
+                    if (
+                      (buffer[i] === 0 || buffer[i] === 1) &&
+                      (buffer[i + buffer[i + 1] + 3] === 0 ||
+                        buffer[i + buffer[i + 1] + 3] === 1) &&
+                      buffer[i + 1] >= size
+                    ) {
+                      buffer[i + 2] = diff - 3;
+                      notLast = true;
+                      break;
+                    }
+                  }
+                  // if the following block is the last one
+                  if (!notLast) buffer[buffer.length - 1] = diff - 3;
+                }
+              }
+            }
+            buffer[curBlocksHeaderIndex] = 0;
+            buffer = random(
+              buffer,
+              curBlocksHeaderIndex + 3,
+              buffer[curBlocksHeaderIndex + 1],
+              'empty'
+            );
           }
+
           break;
         }
       }
@@ -146,24 +205,17 @@ const allocator = (size = 32) => {
       return this;
     },
     mem_free(addr) {
-      console.log({ addr, block: buffer[addr] });
-
       for (let i = addr; i > 0; i--) {
         if (
           buffer[i] === 1 &&
           (buffer[i + buffer[i + 1] + 3] === 0 ||
             buffer[i + buffer[i + 1] + 3] === 1)
         ) {
-          console.log({
-            i,
-            el: buffer[i],
-            next: buffer[i + buffer[i + 1] + 3]
-          });
           buffer[i] = 0;
           buffer = random(buffer, i + 3, buffer[i + 1], 'empty');
+          console.log('Memory has been successfully freed up');
           break;
         }
-        
       }
 
       return this;
@@ -183,12 +235,10 @@ console.log(
     .mem_dump()
     .mem_alloc(5)
     .mem_dump()
-    .mem_alloc(7)
-    .mem_dump().mem_realloc(10, 1)
-    // .mem_free(8)
-    // .mem_dump()
-    // .mem_alloc(1)
-    // .mem_free(24)
-    // .mem_alloc(1)
+    .mem_realloc(10, 9)
+    .mem_dump()
+    .mem_free(16)
+    .mem_dump()
+    .mem_alloc(1)
     .mem_dump()
 );
