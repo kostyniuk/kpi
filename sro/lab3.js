@@ -40,6 +40,7 @@ class Queue {
 // let highPriorityQueue = new Queue(2);
 
 let Id = 0;
+const getRandomIntRange = (min, max) => Math.floor(Math.random() * (max - min) + min);
 const getRandomInt = range => Math.floor(Math.random() * Math.floor(range) + 1);
 const generateId = curId => {
   Id++;
@@ -48,7 +49,7 @@ const generateId = curId => {
 class Task {
   id = generateId(Id);
   priority = getRandomInt(weight);
-  timeOfExec = getRandomInt(execRange);
+  timeOfExec = getRandomIntRange(10, 20);
   timeStart;
   timeLeft = this.timeOfExec;
   waitingTime = 0;
@@ -133,8 +134,8 @@ let busy = false;
 let currentTask;
 let executed = 0;
 
-let uselessTime = 0;
 const mqs = (interval, quantity) => {
+  let uselessTime = 0;
   let key = true;
   const planner = new Planner();
 
@@ -147,6 +148,7 @@ const mqs = (interval, quantity) => {
       key = false;
       executed = 0;
       console.log({ busy });
+      timeCurrent = 0;
       //console.log(planner.queues.highPriority.showDone(),
       //planner.queues.lowPriority.showDone())
       console.log('-------------NOT DONE YET-------------');
@@ -157,7 +159,8 @@ const mqs = (interval, quantity) => {
 
       return {
         highPriority: planner.queues.highPriority.showDone(),
-        lowPriority: planner.queues.lowPriority.showDone()
+        lowPriority: planner.queues.lowPriority.showDone(),
+        uselessTime
       };
     }
     if (timeCurrent % interval === 0 && timeCurrent < interval * quantity) {
@@ -221,11 +224,12 @@ const mqs = (interval, quantity) => {
   }
 };
 
-const quantity = 5;
+const quantity = 50;
 
-//const { highPriority, lowPriority } = mqs(interval, quantity);
+//const { highPriority, lowPriority } = mqs(30, quantity);
 
 const avgTimeOfWait = new Map();
+const uselessTimeMap = new Map();
 
 const getAvgWaitingTime = (high, low) => {
   let n = 0;
@@ -239,19 +243,19 @@ const getAvgWaitingTime = (high, low) => {
 };
 
 const testingAvgTime = (minInterval, maxInterval) => {
-  for (let i = minInterval; i < maxInterval; i++) {
+  for (let i = minInterval; i < maxInterval+1; i++) {
     //console.log({def: mqs(interval, quantity)})
     console.log({ i, interval });
-    const { highPriority, lowPriority } = mqs(interval, quantity);
+    const { highPriority, lowPriority, uselessTime } = mqs(i, quantity);
     const avgWaitTime = getAvgWaitingTime(highPriority, lowPriority);
     avgTimeOfWait.set(`${i}`, avgWaitTime);
-    console.log(avgTimeOfWait);
+    uselessTimeMap.set(`${i}`, uselessTime);
   }
 
-  return avgTimeOfWait;
+  return [avgTimeOfWait, uselessTimeMap];
 };
 
-console.log(testingAvgTime(10, 50));
-console.log(getAvgWaitingTime(highPriority, lowPriority));
+console.log(testingAvgTime(1, 50));
+//console.log(getAvgWaitingTime(highPriority, lowPriority));
 //console.log({ highPriority, lowPriority });
-console.log(executed);
+//  console.log(mqs(50, 5))
