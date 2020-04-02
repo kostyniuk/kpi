@@ -14,7 +14,7 @@ let N = 256; // N - number of countings
 const date = new Date().toISOString();
 const fileName = `lab1_1-${date}.txt`;
 
-const y = linspace(0, N, 1);
+const y = linspace(0, N, 1);                                                                                                                                                                                                                                                          
 
 const mathExp = arr => {
   return arr.reduce((a, b) => a + b, 0) / arr.length;

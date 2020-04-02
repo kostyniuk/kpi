@@ -9,12 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fs-writefile-promise": "^3.0.2",
+      "fs-writefile-promise": "^3.0.2",
     "googleapis": "^39.2.0",
     "node-gd": "^2.0.0",
     "plotly": "^1.0.6"
   },
   "devDependencies": {
     "prettier": "^1.19.1"
-  }
+  }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
 }
